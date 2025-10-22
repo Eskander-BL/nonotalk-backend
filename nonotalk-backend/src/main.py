@@ -21,8 +21,14 @@ app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'sta
 
 # Configuration
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'nonotalk-secret-key-2025')
-app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(os.path.dirname(__file__), 'database', 'app.db')}"
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Force SSL pour Neon (sinon connexion refusée)
+if app.config['SQLALCHEMY_DATABASE_URI'].startswith("postgresql"):
+    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+        "connect_args": {"sslmode": "require"}
+    }
 
 # CORS pour permettre les requêtes depuis le frontend
 CORS(app, supports_credentials=True)

@@ -11,7 +11,7 @@ import traceback
 invite_bp = Blueprint('invite', __name__)
 
 def build_invitation_html(base_url: str, signup_url: str, inviter_name: str) -> str:
-    logo_url = f"{base_url.rstrip('/')}/logo.png"
+    logo_url = f"{base_url.rstrip('/')}/logonono.png"
     avatar_url = f"{base_url.rstrip('/')}/assets/ai-avatar.png"
     # Fallback si logo/asset non disponibles publiquement
     # Vous pouvez héberger les images sur votre domaine et ajuster base_url via PUBLIC_BASE_URL
