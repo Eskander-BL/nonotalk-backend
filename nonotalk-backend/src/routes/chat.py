@@ -15,7 +15,7 @@ OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', 'sk-fake-key')
 OPENAI_API_BASE = os.getenv('OPENAI_API_BASE', 'https://api.openai.com/v1')
 client = OpenAI(api_key=OPENAI_API_KEY, base_url=OPENAI_API_BASE)
 from langchain_openai import ChatOpenAI
-from langchain.schema import HumanMessage, AIMessage, SystemMessage
+from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 
 # Warmup OpenAI model/connection to reduce first-token latency
 _warmup_started = False
