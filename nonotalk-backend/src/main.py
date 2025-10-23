@@ -30,10 +30,11 @@ app.config['SESSION_COOKIE_SAMESITE'] = 'None'
 app.config['SESSION_COOKIE_SECURE'] = True
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 
-# Force SSL pour Neon (sinon connexion refusée)
-if app.config['SQLALCHEMY_DATABASE_URI'].startswith("postgresql"):
+# Options moteur SQLAlchemy: SSL requis + pré-ping pour éviter timeouts Render
+if app.config['SQLALCHEMY_DATABASE_URI'] and app.config['SQLALCHEMY_DATABASE_URI'].startswith("postgresql"):
     app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
-        "connect_args": {"sslmode": "require"}
+        "pool_pre_ping": True,  # évite les timeouts Render / connexions dormantes
+        "connect_args": {"sslmode": "require"}  # sécurise la connexion PostgreSQL
     }
 
 # CORS précis pour origines autorisées (credentials cross-site)
