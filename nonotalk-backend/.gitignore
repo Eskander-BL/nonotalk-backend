@@ -19,3 +19,9 @@ src/database/*.db
 *.pyc
 *.pyo
 *.DS_Store
+
+# Fichiers de configuration local
+GUIDE_INSTALLATION_DETAILLE.md
+LANCEMENT_RAPIDE.bat
+lancement_rapide.sh
+leScript.jsx

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <link rel="icon" type="image/png" href="/logonono.png" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>nonotalk-backend</title>
     <style>
@@ -68,7 +68,8 @@
     </div>
 
     <script>
-        const API_BASE_URL = '/api/users';
+        const API_URL = (window.VITE_API_URL || window.API_URL || `${window.location.origin}/api`).replace(/\/+$/, '');
+        const API_BASE_URL = `${API_URL}/users`;
 
         // Helper function to display results
         function displayResult(elementId, data) {
@@ -84,7 +85,7 @@
         async function getUsers() {
             const resultElementId = 'get-users-result';
             try {
-                const response = await fetch(API_BASE_URL);
+                const response = await fetch(API_BASE_URL, { credentials: 'include' });
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 const data = await response.json();
                 displayResult(resultElementId, data);
@@ -106,6 +107,7 @@
                 const response = await fetch(API_BASE_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
                     body: JSON.stringify({ username, email })
                 });
                 const data = await response.json();
@@ -128,7 +130,7 @@
                 return;
             }
             try {
-                const response = await fetch(`${API_BASE_URL}/${userId}`);
+                const response = await fetch(`${API_BASE_URL}/${userId}`, { credentials: 'include' });
                  if (response.status === 404) throw new Error('User not found');
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 const data = await response.json();
@@ -160,6 +162,7 @@
                 const response = await fetch(`${API_BASE_URL}/${userId}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
                     body: JSON.stringify(updateData)
                 });
                 if (response.status === 404) throw new Error('User not found');
@@ -184,7 +187,8 @@
             }
             try {
                 const response = await fetch(`${API_BASE_URL}/${userId}`, {
-                    method: 'DELETE'
+                    method: 'DELETE',
+                    credentials: 'include'
                 });
                 if (response.status === 404) throw new Error('User not found');
                 if (!response.ok && response.status !== 204) throw new Error(`HTTP error! status: ${response.status}`); // Allow 204
