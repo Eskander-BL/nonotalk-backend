@@ -1,5 +1,6 @@
 import os
 import sys
+import re
 # DON'T CHANGE THIS !!!
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
@@ -24,14 +25,24 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'nonotalk-secret-key-2025')
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+# Cookies de session cross-site (nécessaire si front et back sont sur des domaines différents)
+app.config['SESSION_COOKIE_SAMESITE'] = 'None'
+app.config['SESSION_COOKIE_SECURE'] = True
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+
 # Force SSL pour Neon (sinon connexion refusée)
 if app.config['SQLALCHEMY_DATABASE_URI'].startswith("postgresql"):
     app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
         "connect_args": {"sslmode": "require"}
     }
 
-# CORS pour permettre les requêtes depuis le frontend
-CORS(app, supports_credentials=True)
+# CORS précis pour origines autorisées (credentials cross-site)
+# Exemple d'ENV: FRONTEND_ORIGINS="https://nonotalk-frontend.onrender.com,http://localhost:5173"
+frontend_origins_env = os.getenv('FRONTEND_ORIGINS', '')
+origins_list = [o.strip() for o in frontend_origins_env.split(',') if o.strip()] or ['http://localhost:5173', 'http://localhost:4173']
+# Autoriser dynamiquement les front Render (*.onrender.com) tout en supportant les credentials
+render_regex = re.compile(r"^https://.*\.onrender\.com$")
+CORS(app, supports_credentials=True, resources={r"/api/*": {"origins": origins_list + [render_regex]}})
 
 # Enregistrement des blueprints
 app.register_blueprint(user_bp, url_prefix='/api')

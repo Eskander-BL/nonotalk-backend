@@ -124,13 +124,34 @@ export function useVoice() {
         return
       }
 
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      const mediaRecorder = new MediaRecorder(stream)
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: false,
+          channelCount: 1
+        }
+      })
+      // Choisir un mimeType compatible (Safari iOS supporte parfois audio/mp4, Chrome audio/webm;codecs=opus)
+      const preferredTypes = [
+        'audio/webm;codecs=opus',
+        'audio/webm',
+        'audio/mp4'
+      ]
+      let chosenType = ''
+      if (typeof window !== 'undefined' && window.MediaRecorder && typeof MediaRecorder.isTypeSupported === 'function') {
+        for (const t of preferredTypes) {
+          if (MediaRecorder.isTypeSupported(t)) { chosenType = t; break }
+        }
+      }
+      const mediaRecorder = chosenType ? new MediaRecorder(stream, { mimeType: chosenType }) : new MediaRecorder(stream)
       mediaRecorderRef.current = mediaRecorder
       audioChunksRef.current = []
 
       // Créer un contexte audio pour détecter le silence
-      const audioContext = new AudioContext()
+      const AudioCtx = (typeof window !== 'undefined' && (window.AudioContext || window.webkitAudioContext)) || null
+      const audioContext = AudioCtx ? new AudioCtx() : new (window.AudioContext)()
+      try { await audioContext.resume?.() } catch {}
       audioContextRef.current = audioContext
       const source = audioContext.createMediaStreamSource(stream)
       const analyser = audioContext.createAnalyser()
@@ -182,7 +203,8 @@ export function useVoice() {
           window.dispatchEvent(new CustomEvent('voice:speech_end'))
         } catch {}
 
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' })
+        const currentType = (mediaRecorderRef.current && mediaRecorderRef.current.mimeType) || 'audio/webm'
+        const audioBlob = new Blob(audioChunksRef.current, { type: currentType })
         console.log('[useVoice] audioBlob size=', audioBlob.size)
         const transcript = await transcribeAudio(audioBlob)
         console.log('[useVoice] Transcription reçue:', transcript)
@@ -247,7 +269,8 @@ export function useVoice() {
   const transcribeAudio = async (audioBlob) => {
     try {
       const formData = new FormData()
-      formData.append('audio', audioBlob, 'recording.wav')
+      const ext = audioBlob?.type?.includes('mp4') ? 'mp4' : (audioBlob?.type?.includes('webm') ? 'webm' : 'wav')
+      formData.append('audio', audioBlob, `recording.${ext}`)
 
       console.log('[useVoice] POST /api/speech-to-text ...')
       const response = await fetch(`${API_URL}/speech-to-text`, {

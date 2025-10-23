@@ -523,7 +523,18 @@ export default function ChatPage() {
 
   const handleImageUpload = async (event) => {
     const file = event.target.files[0]
-    if (!file || !currentConversation) return
+    if (!file) return
+
+    // S'assurer qu'une conversation existe (création lazy si nécessaire)
+    let convId = currentConversation?.id
+    if (!convId) {
+      const conv = await createMainConversation()
+      convId = conv?.id
+      if (!convId) {
+        console.error('[ChatPage] Impossible de déterminer une conversation id pour upload image')
+        return
+      }
+    }
 
     const formData = new FormData()
     formData.append('image', file)
@@ -531,7 +542,7 @@ export default function ChatPage() {
     setIsLoading(true)
 
     try {
-      const response = await fetch(`${API_URL}/chat/conversations/${currentConversation.id}/upload-image`, {
+      const response = await fetch(`${API_URL}/chat/conversations/${convId}/upload-image`, {
         method: 'POST',
         credentials: 'include',
         body: formData,
@@ -543,7 +554,7 @@ export default function ChatPage() {
         setMessages(prev => {
           const next = [...prev, data.image_message, data.ai_message]
           try {
-            localStorage.setItem(`recentMessages:${currentConversation.id}`, JSON.stringify(next.slice(-10)))
+            localStorage.setItem(`recentMessages:${convId}`, JSON.stringify(next.slice(-10)))
           } catch (e) {
             console.warn('Impossible d\'enregistrer le cache messages:', e)
           }
@@ -737,22 +748,35 @@ export default function ChatPage() {
             ref={fileInputRef}
             type="file"
             accept="image/*"
+            capture="environment"
             onChange={handleImageUpload}
-            className="hidden"
+            className="sr-only"
+            tabIndex={-1}
+            aria-hidden="true"
           />
           <Button 
-            onClick={() => fileInputRef.current?.click()}
+            onClick={() => {
+              const el = fileInputRef.current
+              if (!el) return
+              try {
+                if (typeof el.showPicker === 'function') {
+                  el.showPicker()
+                  return
+                }
+              } catch {}
+              try { el.click() } catch {}
+            }}
             variant="outline" 
             size="icon" 
             className="w-12 h-12 rounded-full"
-            disabled={isLoading || !currentConversation}
+            disabled={isLoading}
           >
             <Paperclip className="h-5 w-5" />
           </Button>
 
           <Button
             onClick={handleVoiceRecording}
-            disabled={!currentConversation}
+            disabled={isLoading}
             className={`w-16 h-16 rounded-full opacity-100 ${
               isRecording
                 ? 'bg-red-500 hover:bg-red-600 recording-ring'
