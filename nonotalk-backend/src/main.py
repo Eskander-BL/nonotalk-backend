@@ -22,7 +22,16 @@ app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'sta
 
 # Configuration
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'nonotalk-secret-key-2025')
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
+db_url = os.getenv('DATABASE_URL')
+# Normalise et force le driver psycopg (psycopg3) pour compatibilité Render/Python 3.13
+if db_url:
+    # Render fournit parfois 'postgres://', que SQLAlchemy déconseille
+    if db_url.startswith("postgres://"):
+        db_url = db_url.replace("postgres://", "postgresql://", 1)
+    # Si aucun driver n'est précisé, on impose psycopg (psycopg3)
+    if db_url.startswith("postgresql://") and "+psycopg" not in db_url and "+psycopg2" not in db_url and "+pg8000" not in db_url:
+        db_url = db_url.replace("postgresql://", "postgresql+psycopg://", 1)
+app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Cookies de session cross-site (nécessaire si front et back sont sur des domaines différents)
