@@ -28,6 +28,9 @@ if db_url:
     # Render fournit parfois 'postgres://', que SQLAlchemy déconseille
     if db_url.startswith("postgres://"):
         db_url = db_url.replace("postgres://", "postgresql://", 1)
+    # Remplacer +psycopg2 par +psycopg pour psycopg3
+    if db_url.startswith("postgresql+psycopg2://"):
+        db_url = db_url.replace("postgresql+psycopg2://", "postgresql+psycopg://", 1)
     # Si aucun driver n'est précisé, on impose psycopg (psycopg3)
     if db_url.startswith("postgresql://") and "+psycopg" not in db_url and "+psycopg2" not in db_url and "+pg8000" not in db_url:
         db_url = db_url.replace("postgresql://", "postgresql+psycopg://", 1)

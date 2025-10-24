@@ -22,7 +22,7 @@ _warmup_started = False
 
 def _warm_openai_once():
     try:
-        model_name = os.getenv('OPENAI_CHAT_MODEL', 'gpt-4o-mini')
+        model_name = os.getenv('OPENAI_CHAT_MODEL', 'gpt-4.1-mini')
         # Minimal prompt to establish TLS and prime model
         client.chat.completions.create(
             model=model_name,
